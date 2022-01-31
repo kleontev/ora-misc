@@ -1,4 +1,5 @@
 def _buffer_path="_sqlplus_buffer.sql"
+def _editor="notepad++.exe -notabbar -multiInst -nosession -noPlugin"
 
 set termout off
 
