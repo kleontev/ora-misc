@@ -1,4 +1,5 @@
 set echo off
+set termout off
 set timi off
 set pages 0
 set head off
@@ -8,9 +9,10 @@ set trimspool on
 set long 1000000
 set longchunksize 10000000
 set feedback off
-set termout off
 
 @_save_buffer
+
+set termout on
 
 select t.* 
 from table(
