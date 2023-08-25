@@ -1,3 +1,4 @@
+@_save_set
 set echo off
 set feedback off
 set lines 2000
@@ -19,4 +20,4 @@ spool off
 
 col payload clear
 
-@_set_all.sql
+@_read_set

@@ -1,3 +1,4 @@
+@_save_set
 set lines 300
 
 col first_load_time for a30 wrap
@@ -18,4 +19,4 @@ order by first_load_time desc
 /
 
 @_read_buffer
-@_set_all
+@_read_set

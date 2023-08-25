@@ -1,3 +1,5 @@
+@_save_set
+
 set echo off
 set timi off
 set pages 0
@@ -19,4 +21,4 @@ where s.sid = &1.
 /    
 
 @_read_buffer
-@_set_all
+@_read_set

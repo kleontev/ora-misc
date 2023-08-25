@@ -1,3 +1,5 @@
+@_save_set
+
 set echo off
 set termout off
 set timi off
@@ -23,4 +25,4 @@ from table(
 /
 
 @_read_buffer
-@_set_all
+@_read_set

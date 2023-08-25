@@ -1,10 +1,12 @@
+@_save_set
+
 set head off
 set feedback off
 set timi off
 set pages 0 
 set lines 2000
 
-spool &_buffer_path. replace
+spool &_my_buffer_path. replace
 
 select sql_fulltext 
 from gv$sqlarea
@@ -15,7 +17,7 @@ where 1 = 1
 
 spool off
 
-@_set_all
+@_read_set
 
 set lines 300
 
@@ -37,4 +39,4 @@ where sql_id = '&1.'
 /
 
 @_read_buffer
-@_set_all
+@_read_set

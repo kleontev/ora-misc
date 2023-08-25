@@ -1,3 +1,5 @@
+@_save_set
+
 set echo off
 set timi off
 set pages 0
@@ -21,4 +23,4 @@ select * from table(dbms_xplan.display(format => 'typical'))
 /
 
 @_read_buffer
-@_set_all
+@_read_set
