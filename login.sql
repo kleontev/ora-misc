@@ -27,7 +27,7 @@ from dual
 /
 
 
-ho title "db=&_connect_identifier., user=&_user., inst_id=&_my_inst_id, sid=&_my_sid., serial=&_my_serial."
+ho title db=&_connect_identifier., user=&_user., inst_id=&_my_inst_id, sid=&_my_sid., serial=&_my_serial.
 
 set sqlprompt "&_my_prompt."
 
