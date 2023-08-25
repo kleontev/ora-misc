@@ -7,6 +7,10 @@ col schemaname for a20
 col osuser for a10
 col seconds_in_wait for 999,999
 
+col "LINE/COL" for a10
+col "ERROR" for a65 wrap
+
+
 set head on 
 set echo off
 set time on

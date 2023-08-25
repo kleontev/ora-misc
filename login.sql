@@ -37,6 +37,10 @@ alter session set nls_date_format='yyyy.mm.dd hh24:mi:ss'
 alter session set statistics_level = all
 /
 
+alter session set plsql_warnings = 'enable:all'
+/
+
+
 -- so I can "ed" immediately
 select * from dual
 .
