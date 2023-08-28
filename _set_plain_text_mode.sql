@@ -1,0 +1,10 @@
+set echo off
+set feedback off
+set head off
+set lines 32767
+set longchunksize 200000000
+set long 200000000
+set pages 0
+set timi off
+set time off
+set trimspool on

@@ -65,6 +65,14 @@ def _editor="notepad++.exe -notabbar -multiInst -nosession -noPlugin"
 set editfile &_my_ed_path
 
 
+-- transform params for ddl
+exec dbms_metadata.set_transform_param(dbms_metadata.session_transform, 'BODY', false);
+exec dbms_metadata.set_transform_param(dbms_metadata.session_transform, 'PRETTY', true);
+exec dbms_metadata.set_transform_param(dbms_metadata.session_transform, 'SQLTERMINATOR', true);
+exec dbms_metadata.set_transform_param(dbms_metadata.session_transform, 'CONSTRAINTS_AS_ALTER', false);
+exec dbms_metadata.set_transform_param(dbms_metadata.session_transform, 'SEGMENT_ATTRIBUTES', false);
+
+
 -- set my default sqlplus parameters 
 set echo off
 set feedback on
