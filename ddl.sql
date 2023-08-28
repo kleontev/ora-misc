@@ -84,7 +84,25 @@ select
 from dual
 /
 
--- TODO get_dependent_ddl for relevant objects
+with 
+dep_objects(base_obj_owner, base_obj_name, dep_obj_type, dep_obj_owner, dep_obj_name) as (
+    select table_owner, table_name, 'INDEX', owner, index_name from all_indexes
+    union all
+    select table_owner, table_name, 'TRIGGER', owner, trigger_name from all_triggers
+)
+select 
+    dbms_metadata.get_ddl(
+        object_type => dep_obj_type,
+        name => dep_obj_name,
+        schema => dep_obj_owner
+    )
+from dep_objects
+where 1 = 1
+    and base_obj_owner = '&_obj_owner'
+    and base_obj_name = '&_obj_name'
+/
+
+-- TODO get_dependent_ddl for other relevant objects
 
 spool off
 
