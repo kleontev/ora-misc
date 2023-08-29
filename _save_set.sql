@@ -1,1 +1,1 @@
-store set &_my_set_path..sql replace
+store set &_my_set_path. replace
