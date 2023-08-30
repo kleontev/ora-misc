@@ -1,1 +1,1 @@
-@&_my_set_path..sql
+@&_my_set_path.
