@@ -14,17 +14,17 @@ col object_name new_value _obj_name
 with
 parsed_name(owner, name, object_type_mask) as (
     -- keeping things simple, for now
-    select 
+    select
         -- first token, if it's a qualified name, null otherwise
-        substr(unparsed_name, 1, instr(unparsed_name, '.') - 1),        
+        substr(unparsed_name, 1, instr(unparsed_name, '.') - 1),
         -- second token if it's a qualified name, whole name otherwise
         nvl(
-            substr(unparsed_name, instr(unparsed_name, '.') + 1), 
+            substr(unparsed_name, instr(unparsed_name, '.') + 1),
             unparsed_name
         ),
         object_type_mask
     from (
-        select 
+        select
             -- I'll deal with dbms_utility.canonicalize later
             upper('&1') unparsed_name,
             decode(
@@ -46,8 +46,8 @@ select --+leading(pn)
     ) dbms_metadata_compat_obj_type,
     t.owner,
     t.object_name
-from parsed_name pn 
-join all_objects t on 1 = 1 
+from parsed_name pn
+join all_objects t on 1 = 1
     and t.owner = nvl(pn.owner, t.owner)
     and t.object_name = pn.name
     and t.object_type like pn.object_type_mask
@@ -55,7 +55,7 @@ order by
     -- if we specified a schema, look in that schema first,
     -- otherwise look in current schema first
     decode(
-        t.owner, 
+        t.owner,
         pn.owner, 0,
         user, 1,
         2
@@ -84,13 +84,13 @@ select
 from dual
 /
 
-with 
+with
 dep_objects(base_obj_owner, base_obj_name, dep_obj_type, dep_obj_owner, dep_obj_name) as (
     select table_owner, table_name, 'INDEX', owner, index_name from all_indexes
     union all
     select table_owner, table_name, 'TRIGGER', owner, trigger_name from all_triggers
 )
-select 
+select
     dbms_metadata.get_ddl(
         object_type => dep_obj_type,
         name => dep_obj_name,
