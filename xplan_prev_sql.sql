@@ -7,7 +7,7 @@ set termout on
 select t.* 
 from table(
     dbms_xplan.display_cursor(
-        format => 'all allstats last +predicate +alias -projection'
+        format => 'all allstats last +predicate +alias -projection +outline'
     )
 ) t
 /
