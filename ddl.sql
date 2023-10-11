@@ -11,6 +11,8 @@ col dbms_metadata_compat_obj_type new_value _obj_type
 col owner new_value _obj_owner
 col object_name new_value _obj_name
 
+set head off
+
 with
 parsed_name(owner, name, object_type_mask) as (
     -- keeping things simple, for now
