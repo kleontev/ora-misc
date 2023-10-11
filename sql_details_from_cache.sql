@@ -33,6 +33,11 @@ select
     rows_processed,
     cpu_time / 1e6 cpu_time_sec,
     elapsed_time / 1e6 elapsed_time_sec,
+    physical_read_requests, 
+    physical_read_bytes / 1e9 physical_read_gb,
+    disk_reads,
+    direct_reads, 
+    buffer_gets,
     last_active_time
 from gv$sqlarea 
 where sql_id = '&1.'
