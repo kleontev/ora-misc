@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<displays>
+<display id="kir.expand_sql_text" type="" style="Script" enable="true">
+	<name><![CDATA[expand_sql_text]]></name>
+	<description><![CDATA[]]></description>
+	<tooltip><![CDATA[]]></tooltip>
+	<drillclass><![CDATA[]]></drillclass>
+	<CustomValues>
+	</CustomValues>
+	<query>
+		<sql><![CDATA[set feedback off
+set lines 200
+set serverout on
+
+declare
+  l_clob CLOB;
+BEGIN
+  DBMS_UTILITY.expand_sql_text (
+    input_sql_text  => :Value,
+    output_sql_text => l_clob
+  );
+  DBMS_OUTPUT.put_line(l_clob);
+END;
+/]]></sql>
+		<binds>
+			<bind id="Value">
+				<prompt><![CDATA[SQL_FULLTEXT]]></prompt>
+				<tooltip><![CDATA[SQL_FULLTEXT]]></tooltip>
+				<value><![CDATA[null]]></value>
+				<bracket><![CDATA[null]]></bracket>
+			</bind>
+		</binds>
+	</query>
+</display>
+</displays>

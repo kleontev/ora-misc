@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<displays>
+<display id="kir.session" type="" style="Table" enable="true">
+	<name><![CDATA[gv$session]]></name>
+	<description><![CDATA[]]></description>
+	<tooltip><![CDATA[]]></tooltip>
+	<drillclass><![CDATA[]]></drillclass>
+	<CustomValues>
+		<TYPE><![CDATA[horizontal]]></TYPE>
+	</CustomValues>
+	<query>
+		<sql><![CDATA[select
+    s.inst_id,
+    s.sid,
+    s.serial#,
+    s.audsid,
+    s.service_name,
+    --
+    s.logon_time,
+    s.status,
+    s.last_call_et,
+    --
+    s.username,
+    s.schemaname,
+    s.osuser,
+    s.process,
+    s.machine,
+    s.program,
+    s.type,
+    s.action,
+    s.module,
+    s.client_info,
+    --
+    s.sql_id,
+    s.sql_exec_id,
+    s.sql_exec_start,
+    s.sql_child_number,
+    --
+    s.blocking_instance,
+    s.blocking_session,
+    s.blocking_session_status,
+    --
+    s.event,
+    s.wait_class,
+    s.wait_time,
+    s.seconds_in_wait,
+    p.tracefile
+from gv$session s
+join gv$process p on 1 = 1
+    and p.addr = s.paddr
+    and p.inst_id = s.inst_id
+where 1 = 1
+    and s.ownerid = 2147483644 -- no PX slaves
+    and s.type != 'BACKGROUND'
+order by
+    decode(s.sql_id, null, 1, 0),
+    s.inst_id,
+    s.sid,
+    s.serial#]]></sql>
+	</query>
+  <display id="null" type="kir.session.all" style="Table" enable="true">
+		<name><![CDATA[GV$SESSION]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+			<TYPE><![CDATA[vertical]]></TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[select
+    s.*,
+    p.tracefile
+from gv$session s
+join gv$process p on 1 = 1
+    and p.addr = s.paddr
+    and p.inst_id = s.inst_id
+where 1 = 1
+    and s.inst_id = :INST_ID
+    and s.sid = :SID
+    and s.serial# = :SERIAL#]]></sql>
+			<binds>
+				<bind id="INST_ID">
+					<prompt><![CDATA[INST_ID]]></prompt>
+					<tooltip><![CDATA[INST_ID]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+				<bind id="SID">
+					<prompt><![CDATA[SID]]></prompt>
+					<tooltip><![CDATA[SID]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+				<bind id="SERIAL#">
+					<prompt><![CDATA[SERIAL#]]></prompt>
+					<tooltip><![CDATA[SERIAL#]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+			</binds>
+		</query>
+	</display>
+    <display id="null" type="kir.session.process" style="Table" enable="true">
+		<name><![CDATA[GV$PROCESS]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+			<TYPE><![CDATA[vertical]]></TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[select
+    p.*
+from gv$session s
+join gv$process p on 1 = 1
+    and p.addr = s.paddr
+    and p.inst_id = s.inst_id
+where 1 = 1
+    and s.inst_id = :INST_ID
+    and s.sid = :SID
+    and s.serial# = :SERIAL#]]></sql>
+			<binds>
+				<bind id="INST_ID">
+					<prompt><![CDATA[INST_ID]]></prompt>
+					<tooltip><![CDATA[INST_ID]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+				<bind id="SID">
+					<prompt><![CDATA[SID]]></prompt>
+					<tooltip><![CDATA[SID]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+				<bind id="SERIAL#">
+					<prompt><![CDATA[SERIAL#]]></prompt>
+					<tooltip><![CDATA[SERIAL#]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+			</binds>
+		</query>
+	</display>
+  	<display id="kir.session.sql" type="" style="Table" enable="true">
+		<name><![CDATA[GV$SQL]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+			<TYPE><![CDATA[vertical]]></TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[select
+*
+from gv$sql
+where 1 = 1
+    and sql_id = :SQL_ID
+    and child_number = :SQL_CHILD_NUMBER
+    and inst_id = :INST_ID
+    and :SQL_ID is not null]]></sql>
+			<binds>
+				<bind id="SQL_ID">
+					<prompt><![CDATA[SQL_ID]]></prompt>
+					<tooltip><![CDATA[SQL_ID]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+				<bind id="SQL_CHILD_NUMBER">
+					<prompt><![CDATA[SQL_CHILD_NUMBER]]></prompt>
+					<tooltip><![CDATA[SQL_CHILD_NUMBER]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+				<bind id="INST_ID">
+					<prompt><![CDATA[INST_ID]]></prompt>
+					<tooltip><![CDATA[INST_ID]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+			</binds>
+		</query>
+	</display>
+	<display id="kir.session.sql_text" type="" style="Script" enable="true">
+		<name><![CDATA[SQL TEXT]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[set echo off
+set feedback off
+set lines 32767
+set trimspool on
+set head off
+set pages 0
+set long 2000000
+set longchunksize 2000000
+set tab off
+
+select replace(sql_fulltext, chr(0))
+from gv$sqlarea
+where 1 = 1
+    and inst_id = :INST_ID
+    and sql_id = :SQL_ID
+    and :SQL_ID is not null]]></sql>
+			<binds>
+				<bind id="INST_ID">
+					<prompt><![CDATA[INST_ID]]></prompt>
+					<tooltip><![CDATA[INST_ID]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+				<bind id="SQL_ID">
+					<prompt><![CDATA[SQL_ID]]></prompt>
+					<tooltip><![CDATA[SQL_ID]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+			</binds>
+		</query>
+	</display>
+	<display id="kir.session.rtsm_text" type="" style="Code" enable="true">
+		<name><![CDATA[TEXT RTSM]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[select
+    dbms_sql_monitor.report_sql_monitor(
+        sql_id => s.sql_id,
+        sql_exec_start => s.sql_exec_start,
+        sql_exec_id => s.sql_exec_id,
+        report_level => 'all -sql_text +plan_histogram',
+        type => 'text'
+    )
+from gv$session s
+where 1 = 1
+    and s.sid = :SID
+    and s.inst_id = :INST_ID]]></sql>
+			<binds>
+				<bind id="SID">
+					<prompt><![CDATA[SID]]></prompt>
+					<tooltip><![CDATA[SID]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+				<bind id="INST_ID">
+					<prompt><![CDATA[INST_ID]]></prompt>
+					<tooltip><![CDATA[INST_ID]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+			</binds>
+		</query>
+	</display>
+  <display id="kir.session.display_cursor" type="" style="Script" enable="true">
+		<name><![CDATA[DISPLAY_CURSOR]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[set echo off
+set lines 2000
+set trimspool on
+set head off
+set feedback off
+set pages 0
+
+select replace(plan_table_output, chr(0))
+from dbms_xplan.display_cursor(
+    :SQL_ID,
+    :SQL_CHILD_NUMBER,
+    format => 'allstats last'
+)
+where :SQL_ID is not null]]></sql>
+			<binds>
+				<bind id="SQL_ID">
+					<prompt><![CDATA[SQL_ID]]></prompt>
+					<tooltip><![CDATA[SQL_ID]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+				<bind id="SQL_CHILD_NUMBER">
+					<prompt><![CDATA[SQL_CHILD_NUMBER]]></prompt>
+					<tooltip><![CDATA[SQL_CHILD_NUMBER]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+			</binds>
+		</query>
+	</display>
+	<display id="kir.session.ash" type="" style="Table" enable="true">
+		<name><![CDATA[ASH]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+			<TYPE><![CDATA[horizontal]]></TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[select
+    inst_id,
+    sql_id,
+    sql_child_number,
+    event,
+    count(*) as sample_count,
+    count(distinct sql_exec_id) exec_count,
+    min(sample_time) as min_sample_time,
+    max(sample_time) as max_sample_Time
+from gv$active_session_history s
+where 1 = 1
+    and s.inst_id = :INST_ID
+    and s.session_id = :SID
+    and s.session_Serial# = :SERIAL#
+group by
+    inst_id,
+    sql_id,
+    sql_child_number,
+    event
+order by sample_count desc]]></sql>
+			<binds>
+				<bind id="INST_ID">
+					<prompt><![CDATA[INST_ID]]></prompt>
+					<tooltip><![CDATA[INST_ID]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+				<bind id="SID">
+					<prompt><![CDATA[SID]]></prompt>
+					<tooltip><![CDATA[SID]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+				<bind id="SERIAL#">
+					<prompt><![CDATA[SERIAL#]]></prompt>
+					<tooltip><![CDATA[SERIAL#]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+			</binds>
+		</query>
+	</display>
+	<display id="null" type="" style="Code" enable="true">
+		<name><![CDATA[GV$DIAG_TRACE_FILE_CONTENTS]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[select
+    payload
+from gv$diag_trace_file_contents c
+where 1 = 1
+    and c.inst_id = :INST_ID
+    and c.adr_home = substr(:TRACEFILE, 1, instr(:TRACEFILE, '/', -1, 2) - 1) -- exclude /trace subdir
+    and c.trace_filename = substr(:TRACEFILE, instr(:TRACEFILE, '/', -1) + 1)]]></sql>
+		</query>
+	</display>
+	<display id="null" type="" style="Table" enable="true">
+		<name><![CDATA[V$SESSTAT]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+			<TYPE><![CDATA[horizontal]]></TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[select
+    sn.class,
+    sn.name,
+    to_char(ss.value, decode(ss.value, 0, 'FM0', 'FM999,999,999,999,999,999')) value
+from gv$sesstat ss
+join gv$statname sn on 1 = 1
+    and sn.statistic# = ss.statistic#
+    and sn.inst_id = ss.inst_id
+where 1 = 1
+    and ss.inst_id = :INST_ID
+    and ss.sid = :SID
+order by sn.class]]></sql>
+		</query>
+	</display>
+  <item  reload="false"  reloadparent="false" removeFromParent="true" className="oracle.dbtools.raptor.report.addin.DrillReportAction" classArgs="kir.trace_file_contents" toolbar="true" >
+  <title>view session trace file</title>
+  </item>
+  <item  reload="true"  reloadparent="false" removeFromParent="false" toolbar="false" >
+  <title>Kill Session</title>
+  <prompt type="confirm" required="false" >
+  <label>Kill Session?</label>
+  <default><![CDATA[]]></default>
+  <value><![CDATA[]]></value>
+  </prompt>
+  <sql><![CDATA[ALTER SYSTEM KILL SESSION '#SID#, #SERIAL##, @#INST_ID#' IMMEDIATE]]></sql>
+  <script language="js"><![CDATA[]]></script>
+  <help>Kill the selected session.</help>
+  </item>
+</display>
+</displays>

@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<displays>
+<display id="be1a2a6d-018a-1000-8027-c0a801305342" type="" style="Table" enable="true">
+	<name><![CDATA[dba_tables]]></name>
+	<description><![CDATA[]]></description>
+	<tooltip><![CDATA[]]></tooltip>
+	<drillclass><![CDATA[]]></drillclass>
+	<CustomValues>
+		<TYPE><![CDATA[horizontal]]></TYPE>
+	</CustomValues>
+	<query>
+		<sql><![CDATA[select --+first_rows leading(t s) use_nl(t)
+    t.owner, 
+    t.table_name, 
+    t.tablespace_name, 
+    to_char(t.num_rows, 'FM999,999,999,999') stat_num_rows,
+    to_char(t.blocks, 'FM999,999,999,999') stat_blocks,
+    t.avg_row_len, 
+    t.degree,
+    t.last_analyzed,
+    t.partitioned,
+    t.temporary,
+    t.user_stats,
+    t.compression,
+    t.compress_for,
+    t.read_only,
+    t.result_cache x_rc
+    
+--    c.comments
+from dba_tables t
+--left join dba_tab_comments c on 1 = 1 
+--    and c.owner = t.owner
+--    and c.table_name = t.table_name
+--    and c.table_type = 'TABLE'
+where 1 = 1 
+    and t.table_name like upper(nvl(:P_TABLE_NAME, '%'))]]></sql>
+		<binds>
+			<bind id="P_TABLE_NAME">
+				<prompt><![CDATA[P_TABLE_NAME]]></prompt>
+				<tooltip><![CDATA[P_TABLE_NAME]]></tooltip>
+				<value><![CDATA[RTM_WORK_TIME_LOG]]></value>
+				<bracket><![CDATA[null]]></bracket>
+			</bind>
+		</binds>
+	</query>
+	<display id="null" type="" style="Table" enable="true">
+		<name><![CDATA[ALL]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+			<TYPE><![CDATA[vertical]]></TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[select 
+    *
+from dba_tables
+where 1 = 1 
+    and owner = :OWNER
+    and table_name = :TABLE_NAME]]></sql>
+			<binds>
+				<bind id="OWNER">
+					<prompt><![CDATA[OWNER]]></prompt>
+					<tooltip><![CDATA[OWNER]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+				<bind id="TABLE_NAME">
+					<prompt><![CDATA[TABLE_NAME]]></prompt>
+					<tooltip><![CDATA[TABLE_NAME]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+			</binds>
+		</query>
+	</display>
+	<display id="null" type="" style="Table" enable="true">
+		<name><![CDATA[DBA_TAB_COLUMNS]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+			<TYPE><![CDATA[horizontal]]></TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[select 
+    c.column_id,
+    c.column_name, 
+    c.nullable,
+    c.data_type,
+    c.data_length,
+    c.data_precision,
+    c.data_scale,
+    c.avg_col_len,
+    to_char(c.num_nulls, 'FM999,999,999,999') num_nulls,
+    cc.comments
+from dba_tab_columns c 
+left join dba_col_comments cc on 1 = 1
+    and cc.owner = c.owner
+    and cc.table_name = c.table_name
+    and cc.column_name = c.column_name    
+where 1 = 1 
+    and c.owner = :OWNER
+    and c.table_name = :TABLE_NAME
+order by c.column_id]]></sql>
+			<binds>
+				<bind id="OWNER">
+					<prompt><![CDATA[OWNER]]></prompt>
+					<tooltip><![CDATA[OWNER]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+				<bind id="TABLE_NAME">
+					<prompt><![CDATA[TABLE_NAME]]></prompt>
+					<tooltip><![CDATA[TABLE_NAME]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+			</binds>
+		</query>
+	</display>
+	<display id="null" type="" style="Table" enable="true">
+		<name><![CDATA[DBA_INDEXES]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+			<TYPE><![CDATA[horizontal]]></TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[select
+    owner, 
+    index_name,
+    index_type, 
+    uniqueness,
+    compression,
+    tablespace_name,
+    to_char(i.distinct_keys, 'FM999,999,999,999') distinct_keys,
+    to_char(i.clustering_factor, 'FM999,999,999,999') clustering_factor,
+    (select cast(collect(column_name) as sys.odcivarchar2list) from dba_ind_columns where index_name = i.index_name and owner = i.owner) cols
+from dba_indexes i 
+where 1 = 1 
+    and i.table_owner = :OWNER
+    and i.table_name = :TABLE_NAME]]></sql>
+			<binds>
+				<bind id="OWNER">
+					<prompt><![CDATA[OWNER]]></prompt>
+					<tooltip><![CDATA[OWNER]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+				<bind id="TABLE_NAME">
+					<prompt><![CDATA[TABLE_NAME]]></prompt>
+					<tooltip><![CDATA[TABLE_NAME]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+			</binds>
+		</query>
+	</display>
+	<display id="null" type="" style="Script" enable="true">
+		<name><![CDATA[DBMS_METADATA.GET_DDL]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[set lines 2000
+set head off 
+set pages 0 
+set feedback off 
+set long 2000000
+set longchunksize 200000
+select
+    dbms_metadata.get_ddl(
+        object_type => 'TABLE' ,
+        name => :TABLE_NAME,
+        schema => :OWNER
+    )
+from dual
+/]]></sql>
+			<binds>
+				<bind id="TABLE_NAME">
+					<prompt><![CDATA[TABLE_NAME]]></prompt>
+					<tooltip><![CDATA[TABLE_NAME]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+				<bind id="OWNER">
+					<prompt><![CDATA[OWNER]]></prompt>
+					<tooltip><![CDATA[OWNER]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+			</binds>
+		</query>
+	</display>
+	<display id="null" type="" style="Table" enable="true">
+		<name><![CDATA[DBA_SEGMENTS]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+			<TYPE><![CDATA[horizontal]]></TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[select 
+    *
+from dba_segments s 
+where 1 = 1 
+    and s.owner = :OWNER
+    and s.segment_name = :TABLE_NAME
+order by partition_name nulls first]]></sql>
+			<binds>
+				<bind id="OWNER">
+					<prompt><![CDATA[OWNER]]></prompt>
+					<tooltip><![CDATA[OWNER]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+				<bind id="TABLE_NAME">
+					<prompt><![CDATA[TABLE_NAME]]></prompt>
+					<tooltip><![CDATA[TABLE_NAME]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+			</binds>
+		</query>
+	</display>
+</display>
+</displays>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<displays>
+<display id="kir.trace_file_contents" type="" style="Script" enable="true">
+	<name><![CDATA[gv$diag_trace_file_contents]]></name>
+	<description><![CDATA[]]></description>
+	<tooltip><![CDATA[]]></tooltip>
+	<drillclass><![CDATA[]]></drillclass>
+	<CustomValues>
+	</CustomValues>
+	<query>
+		<sql><![CDATA[set echo off 
+set feedback off
+set head off
+set lines 32767
+
+select
+    payload
+from gv$diag_trace_file_contents c
+where 1 = 1
+    and c.inst_id = nvl(:INST_ID, c.inst_id)
+    and c.adr_home = substr(:TRACEFILE, 1, instr(:TRACEFILE, '/', -1, 2) - 1) -- exclude /trace subdir
+    and c.trace_filename = substr(:TRACEFILE, instr(:TRACEFILE, '/', -1) + 1)
+/]]></sql>
+		<binds>
+			<bind id="INST_ID">
+				<prompt><![CDATA[INST_ID]]></prompt>
+				<tooltip><![CDATA[INST_ID]]></tooltip>
+				<value><![CDATA[NULL_VALUE]]></value>
+				<bracket><![CDATA[null]]></bracket>
+			</bind>
+			<bind id="TRACEFILE">
+				<prompt><![CDATA[TRACEFILE]]></prompt>
+				<tooltip><![CDATA[TRACEFILE]]></tooltip>
+				<value><![CDATA[]]></value>
+				<bracket><![CDATA[null]]></bracket>
+			</bind>
+		</binds>
+	</query>
+</display>
+</displays>
