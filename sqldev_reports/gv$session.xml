@@ -65,7 +65,7 @@ order by
 		<drillclass><![CDATA[]]></drillclass>
 		<CustomValues>
 			<TYPE><![CDATA[vertical]]></TYPE>
-		</CustomValues>
+		</CustomValues> 
 		<query>
 			<sql><![CDATA[select
     s.*,
@@ -343,23 +343,6 @@ order by sample_count desc]]></sql>
 					<bracket><![CDATA[null]]></bracket>
 				</bind>
 			</binds>
-		</query>
-	</display>
-	<display id="null" type="" style="Code" enable="true">
-		<name><![CDATA[GV$DIAG_TRACE_FILE_CONTENTS]]></name>
-		<description><![CDATA[]]></description>
-		<tooltip><![CDATA[]]></tooltip>
-		<drillclass><![CDATA[]]></drillclass>
-		<CustomValues>
-		</CustomValues>
-		<query>
-			<sql><![CDATA[select
-    payload
-from gv$diag_trace_file_contents c
-where 1 = 1
-    and c.inst_id = :INST_ID
-    and c.adr_home = substr(:TRACEFILE, 1, instr(:TRACEFILE, '/', -1, 2) - 1) -- exclude /trace subdir
-    and c.trace_filename = substr(:TRACEFILE, instr(:TRACEFILE, '/', -1) + 1)]]></sql>
 		</query>
 	</display>
 	<display id="null" type="" style="Table" enable="true">
