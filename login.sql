@@ -89,6 +89,7 @@ set trimspool on
 set trimout on
 set verify off
 
+set arraysize 5000
 
 -- done. make sure I can "ed" immediately after
 select * from dual
