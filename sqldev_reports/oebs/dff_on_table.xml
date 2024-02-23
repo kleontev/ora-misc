@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<displays>
+<display id="aef2c089-018a-1000-8001-c0a80130f765" type="" style="Table" enable="true">
+	<name><![CDATA[DFF on table]]></name>
+	<description><![CDATA[]]></description>
+	<tooltip><![CDATA[]]></tooltip>
+	<drillclass><![CDATA[]]></drillclass>
+	<CustomValues>
+		<TYPE><![CDATA[horizontal]]></TYPE>
+	</CustomValues>
+	<query>
+		<sql><![CDATA[select
+    a.application_id,
+    a.application_short_name,
+    t.table_name,
+    t.user_table_name,
+    t.description
+from fnd_tables t
+join fnd_application a on a.application_id = t.application_id
+where 1 = 1
+    and t.table_name like :P_FND_TABLE_NAME
+    and exists (
+        select null
+        from fnd_descriptive_flexs df
+        where 1 = 1
+            and df.table_application_id = t.application_id
+            and df.application_Table_name = t.table_name
+        )
+order by
+    decode(a.application_short_name, 'FND', 0, 1),
+    a.application_short_name,
+    t.table_name]]></sql>
+		<binds>
+			<bind id="P_FND_TABLE_NAME">
+				<prompt><![CDATA[P_FND_TABLE_NAME]]></prompt>
+				<tooltip><![CDATA[P_FND_TABLE_NAME]]></tooltip>
+				<value><![CDATA[PER_ALL_PEOPLE_F]]></value>
+				<bracket><![CDATA[null]]></bracket>
+			</bind>
+		</binds>
+	</query>
+	<display id="" type="" style="Table" enable="true">
+		<name><![CDATA[DFFs and Contexts]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+			<TYPE><![CDATA[horizontal]]></TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[
+SELECT 
+    df.table_application_id,
+    df.descriptive_flexfield_name,
+    dft.description dff_description,
+    df.application_table_name,
+    dfct.descriptive_flex_context_code,
+    dfct.description context_description
+FROM fnd_descriptive_flexs df
+JOIN FND_DESCRIPTIVE_FLEXS_TL dft on 1 = 1
+  and dft.application_id = df.application_id
+  and dft.descriptive_flexfield_name = df.descriptive_flexfield_name
+  and dft.language = 'RU'
+join fnd_descr_flex_contexts_tl dfct on 1 = 1
+    and dfct.descriptive_flexfield_name = df.descriptive_flexfield_name
+    and dfct.language = 'RU'
+WHERE 1 = 1
+    and df.application_table_name = :TABLE_NAME
+order by
+    df.descriptive_flexfield_name,
+    decode(
+        dfct.descriptive_flex_context_code,
+        'Global Data Elements', null,
+        dfct.descriptive_flex_context_code
+    ) nulls first
+]]></sql>
+			<binds>
+				<bind id="TABLE_NAME">
+					<prompt><![CDATA[TABLE_NAME]]></prompt>
+					<tooltip><![CDATA[TABLE_NAME]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+			</binds>
+		</query>
+		<display id="" type="" style="Table" enable="true">
+			<name><![CDATA[DFF column usage]]></name>
+			<description><![CDATA[]]></description>
+			<tooltip><![CDATA[]]></tooltip>
+			<drillclass><![CDATA[]]></drillclass>
+			<CustomValues>
+				<TYPE><![CDATA[horizontal]]></TYPE>
+			</CustomValues>
+			<query>
+				<sql><![CDATA[select
+    dfcu.application_Column_name,
+    dfcu.column_seq_num,
+    dfcu.end_user_column_name,
+    dfcut.description,
+    dfcut.form_left_prompt,
+    dfcut.form_above_prompt,
+    dfcu.enabled_Flag,
+    dfcu.required_Flag,
+    dfcu.display_Flag,
+    dfcu.default_value,
+    dfcu.flex_Value_Set_id,
+    fvs.flex_Value_Set_name,
+    fvs.description flex_Value_Set_description,
+    fvt.application_table_name fvt_application_table_name,
+    fvt.value_column_name,
+    fvt.id_column_name,
+    fvt.meaning_column_name,
+    fvt.additional_where_clause
+from fnd_descriptive_flexs df
+left join fnd_descr_flex_column_usages dfcu on 1 = 1
+    and dfcu.application_id = df.application_id
+    and dfcu.descriptive_flexfield_name = df.descriptive_flexfield_name
+left join fnd_descr_flex_col_usage_tl dfcut on 1 = 1
+    and dfcut.application_id = dfcu.application_id
+    and dfcut.descriptive_flexfield_name = dfcu.descriptive_flexfield_name
+    and dfcut.descriptive_flex_context_code = dfcu.descriptive_flex_context_code
+    and dfcut.application_column_name = dfcu.application_column_name
+left join fnd_Flex_value_sets fvs on 1 = 1
+    and fvs.flex_value_set_id = dfcu.flex_Value_Set_id
+left join fnd_flex_Validation_tables fvt on 1 = 1
+    -- dynamic sql chunks use
+    and fvs.flex_Value_Set_id = fvt.flex_Value_set_id
+where 1 = 1
+    and df.table_application_id = :TABLE_APPLICATION_ID
+    and df.application_Table_name = :APPLICATION_TABLE_NAME
+    and df.descriptive_flexfield_name = :DESCRIPTIVE_FLEXFIELD_NAME
+    and DFCU.descriptive_flex_context_code = :DESCRIPTIVE_FLEX_CONTEXT_CODE
+    and dfcut.language = 'RU'
+order by
+    dfcu.column_seq_num]]></sql>
+				<binds>
+					<bind id="TABLE_APPLICATION_ID">
+						<prompt><![CDATA[TABLE_APPLICATION_ID]]></prompt>
+						<tooltip><![CDATA[TABLE_APPLICATION_ID]]></tooltip>
+						<value><![CDATA[NULL_VALUE]]></value>
+						<bracket><![CDATA[null]]></bracket>
+					</bind>
+					<bind id="APPLICATION_TABLE_NAME">
+						<prompt><![CDATA[APPLICATION_TABLE_NAME]]></prompt>
+						<tooltip><![CDATA[APPLICATION_TABLE_NAME]]></tooltip>
+						<value><![CDATA[NULL_VALUE]]></value>
+						<bracket><![CDATA[null]]></bracket>
+					</bind>
+					<bind id="DESCRIPTIVE_FLEXFIELD_NAME">
+						<prompt><![CDATA[DESCRIPTIVE_FLEXFIELD_NAME]]></prompt>
+						<tooltip><![CDATA[DESCRIPTIVE_FLEXFIELD_NAME]]></tooltip>
+						<value><![CDATA[NULL_VALUE]]></value>
+						<bracket><![CDATA[null]]></bracket>
+					</bind>
+					<bind id="DESCRIPTIVE_FLEX_CONTEXT_CODE">
+						<prompt><![CDATA[DESCRIPTIVE_FLEX_CONTEXT_CODE]]></prompt>
+						<tooltip><![CDATA[DESCRIPTIVE_FLEX_CONTEXT_CODE]]></tooltip>
+						<value><![CDATA[NULL_VALUE]]></value>
+						<bracket><![CDATA[null]]></bracket>
+					</bind>
+				</binds>
+			</query>
+		</display>
+	</display>
+</display>
+</displays>
