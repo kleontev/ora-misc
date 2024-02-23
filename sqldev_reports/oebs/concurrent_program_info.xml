@@ -1,0 +1,445 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<displays>
+<display id="aeb38eb2-018a-1000-8001-c0a801306ca0" type="" style="Table" enable="true">
+	<name><![CDATA[Concurrent program info]]></name>
+	<description><![CDATA[]]></description>
+	<tooltip><![CDATA[]]></tooltip>
+	<drillclass><![CDATA[]]></drillclass>
+	<CustomValues>
+		<TYPE><![CDATA[horizontal]]></TYPE>
+	</CustomValues>
+	<query>
+		<sql><![CDATA[with 
+exec_method_code as (
+    select lookup_code, meaning , language
+    from apps.fnd_lookup_values v
+    where v.lookup_type = 'CP_EXECUTION_METHOD_CODE'
+)
+select 
+    -- cp 
+    cp.application_id,
+    cp.concurrent_program_id,
+    cp.concurrent_program_name,
+    cpt.user_concurrent_program_name,
+    cpt.language,
+    cpu.user_name cp_created_by,
+    cpa.application_id cp_app_id, 
+    cpa.application_short_name cp_app_short_name,
+    -- e
+    e.executable_id,
+    e.executable_name,
+    e.execution_method_code,
+    (
+        select meaning 
+        from exec_method_code
+        where lookup_code = e.execution_method_code 
+        and language = cpt.language
+    ) as exec_method_code_meaning,
+    e.execution_file_name,
+    ea.application_id exec_app_id,
+    ea.application_short_name exec_app_short_name
+from apps.fnd_concurrent_programs cp 
+join apps.fnd_concurrent_programs_tl cpt on 1 = 1 
+    and cpt.application_id = cp.application_id
+    and cpt.concurrent_program_id = cp.concurrent_program_id
+join apps.fnd_application cpa on cpa.application_id = cp.application_id
+join apps.fnd_user cpu on cpu.user_id = cp.created_by
+join apps.fnd_executables e on e.executable_id = cp.executable_id   
+join apps.fnd_application ea on ea.application_id = e.application_id
+join apps.fnd_user eu on eu.user_id = e.created_by
+where 1 = 1 
+    and cp.concurrent_program_id = nvl(:CONCURRENT_PROGRAM_ID, cp.concurrent_program_id)
+    and cp.concurrent_program_name like nvl(trim(:P_CONCURRENT_PROGRAM_NAME), '%')    
+    and cpt.user_concurrent_program_name like nvl(trim(:P_USER_CONCURRENT_PROGRAM_NAME), '%')
+    and e.execution_file_name like nvl(trim(:P_EXECUTION_FILE_NAME), '%')
+    and cpt.language = nvl(:P_LANG, userenv('lang'))]]></sql>
+		<binds>
+			<bind id="CONCURRENT_PROGRAM_ID">
+				<prompt><![CDATA[CONCURRENT_PROGRAM_ID]]></prompt>
+				<tooltip><![CDATA[CONCURRENT_PROGRAM_ID]]></tooltip>
+				<value><![CDATA[NULL_VALUE]]></value>
+				<bracket><![CDATA[null]]></bracket>
+			</bind>
+			<bind id="P_CONCURRENT_PROGRAM_NAME">
+				<prompt><![CDATA[P_CONCURRENT_PROGRAM_NAME]]></prompt>
+				<tooltip><![CDATA[P_CONCURRENT_PROGRAM_NAME]]></tooltip>
+				<value><![CDATA[XXHR_COST_ALLOCATIONS_SYNC]]></value>
+				<bracket><![CDATA[null]]></bracket>
+			</bind>
+			<bind id="P_USER_CONCURRENT_PROGRAM_NAME">
+				<prompt><![CDATA[P_USER_CONCURRENT_PROGRAM_NAME]]></prompt>
+				<tooltip><![CDATA[P_USER_CONCURRENT_PROGRAM_NAME]]></tooltip>
+				<value><![CDATA[NULL_VALUE]]></value>
+				<bracket><![CDATA[null]]></bracket>
+			</bind>
+			<bind id="P_EXECUTION_FILE_NAME">
+				<prompt><![CDATA[P_EXECUTION_FILE_NAME]]></prompt>
+				<tooltip><![CDATA[P_EXECUTION_FILE_NAME]]></tooltip>
+				<value><![CDATA[NULL_VALUE]]></value>
+				<bracket><![CDATA[null]]></bracket>
+			</bind>
+			<bind id="P_LANG">
+				<prompt><![CDATA[P_LANG]]></prompt>
+				<tooltip><![CDATA[P_LANG]]></tooltip>
+				<value><![CDATA[NULL_VALUE]]></value>
+				<bracket><![CDATA[null]]></bracket>
+			</bind>
+		</binds>
+	</query>
+	<display id="null" type="" style="Table" enable="true">
+		<name><![CDATA[Parameters]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+			<TYPE><![CDATA[horizontal]]></TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[select --+ no_merge index(df FND_DESCRIPTIVE_FLEXS_U1)
+--    dfcu.application_id,
+--    dfcu.descriptive_flexfield_name,
+--    dfcu.descriptive_flex_context_code,
+    df.last_update_date df_last_update_date,
+    dfcu.last_update_date,
+    dfcu.application_Column_name,
+    dfcu.column_seq_num,
+    dfcu.end_user_column_name,
+    dfcut.language,
+    dfcut.description,
+    dfcu.enabled_Flag,
+    dfcu.required_Flag,
+    dfcu.display_Flag,
+    dfcu.display_Size, 
+    dfcu.maximum_description_len, 
+    dfcu.concatenation_description_len,
+    dfcu.default_value,
+    (
+        select meaning 
+        from apps.fnd_lookup_values v 
+        where 1 = 1
+            and v.lookup_type = 'FLEX_DEFAULT_TYPE'
+            and v.language = dfcut.language
+            and v.lookup_code = dfcu.default_type
+    ) as default_value_type,
+    dfcu.flex_Value_Set_id,    
+    fvs.flex_Value_Set_name,                
+    --fvsu.user_name fvs_created_by,
+    fvs.description fvs_description,
+    fvt.application_table_name,
+    fvt.id_column_name,
+    fvt.id_column_size,
+    fvt.value_column_name,        
+    fvt.value_column_size,
+    (
+        select meaning 
+        from apps.fnd_lookup_values v
+        where 1 = 1 
+            and v.lookup_type = 'FIELD_TYPE' 
+            and v.language = dfcut.language
+            and v.lookup_code = fvs.format_type                
+    ) as value_format_type, 
+    fvs.maximum_size as max_value_size, -- это максимальный размер fvt.value_column_name на уровне НЗ, не на уровне таблицы валидации
+    fvt.meaning_column_name,
+    fvt.meaning_column_size,
+    fvt.additional_where_clause
+from apps.fnd_tables t
+join apps.fnd_descriptive_flexs df on 1 = 1 
+    and df.table_application_id = t.application_id
+    and df.application_table_name = t.table_name
+join apps.fnd_descr_flex_column_usages dfcu on 1 = 1
+    and dfcu.application_id = df.application_id
+    and dfcu.descriptive_flexfield_name = df.descriptive_flexfield_name
+join apps.fnd_descr_flex_col_usage_tl dfcut on 1 = 1
+    and dfcut.application_id = dfcu.application_id
+    and dfcut.descriptive_flexfield_name = dfcu.descriptive_flexfield_name
+    and dfcut.application_column_name = dfcu.application_column_name
+left join apps.fnd_Flex_value_sets fvs on fvs.flex_value_set_id = dfcu.flex_Value_Set_id
+left join apps.fnd_user fvsu on fvsu.user_id = fvs.created_by
+left join apps.fnd_flex_Validation_tables fvt on fvs.flex_Value_Set_id = fvt.flex_Value_set_id    
+where 1 = 1 
+    and t.table_name = 'FND_SRS_MASTER'
+    and dfcu.application_id = :CP_APP_ID
+    and dfcu.descriptive_flexfield_name = '$SRS$.' || :CONCURRENT_PROGRAM_NAME
+    and dfcut.language = :LANGUAGE
+order by dfcu.column_seq_num]]></sql>
+			<binds>
+				<bind id="CP_APP_ID">
+					<prompt><![CDATA[CP_APP_ID]]></prompt>
+					<tooltip><![CDATA[CP_APP_ID]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+				<bind id="CONCURRENT_PROGRAM_NAME">
+					<prompt><![CDATA[CONCURRENT_PROGRAM_NAME]]></prompt>
+					<tooltip><![CDATA[CONCURRENT_PROGRAM_NAME]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+				<bind id="LANGUAGE">
+					<prompt><![CDATA[LANGUAGE]]></prompt>
+					<tooltip><![CDATA[LANGUAGE]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+			</binds>
+		</query>
+	</display>
+	<display id="null" type="" style="Table" enable="true">
+		<name><![CDATA[Aggregate stats over 12 mon]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+			<TYPE><![CDATA[horizontal]]></TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[with
+concurrent_status as (
+    select
+        lookup_code as status_code,
+        trim(meaning) as meaning
+    from apps.fnd_application a
+    join apps.fnd_lookup_values lv on lv.view_application_id = a.application_id
+    where 1 = 1
+        and a.application_short_name = 'FND'
+        and lv.lookup_type = 'CP_STATUS_CODE'
+        and lv.language = 'US'
+),
+concurrent_phase as (
+    select
+        lookup_code as phase_code,
+        trim(meaning) as meaning
+    from apps.fnd_application a
+    join apps.fnd_lookup_values lv on lv.view_application_id = a.application_id
+    where 1 = 1
+        and a.application_short_name = 'FND'
+        and lv.lookup_type = 'CP_PHASE_CODE'
+        and lv.language = 'US'
+),
+requests_of_interest as (
+    select
+        r.request_date,
+        r.request_id,
+        r.phase_code,
+        r.status_code,
+        r.concurrent_program_id,
+        r.program_application_id,
+        r.argument_text,
+        trunc(r.request_date, 'q') as request_date_q,
+        trunc(r.request_date, 'mm') as request_date_mm,
+        r.actual_completion_date - r.actual_start_date as duration
+    from apps.fnd_concurrent_requests r 
+    where request_date >= add_months(trunc(sysdate, 'mm'), -12)
+)
+select 
+    request_date_mm,
+    s.meaning as request_completion_status,    
+    count(*) as request_count,
+    any_value(request_id) keep(dense_rank first order by duration) as request_with_min_duration,
+    numtodsinterval(min(duration), 'day') as min_duration,
+    numtodsinterval(percentile_disc(0.10) within group(order by duration), 'day') dur_10,
+    numtodsinterval(percentile_disc(0.50) within group(order by duration), 'day') dur_50,
+    numtodsinterval(percentile_disc(0.75) within group(order by duration), 'day') dur_75,
+    numtodsinterval(percentile_disc(0.90) within group(order by duration), 'day') dur_90,
+    numtodsinterval(percentile_disc(0.95) within group(order by duration), 'day') dur_95,
+    numtodsinterval(percentile_disc(0.99) within group(order by duration), 'day') dur_99,
+    numtodsinterval(max(duration), 'day') as max_duration,    
+    any_value(request_id) keep(dense_rank last order by duration) as request_with_max_duration,
+    numtodsinterval(avg(duration), 'day') as avg_duration,    
+    numtodsinterval(sum(duration), 'day') as sum_duration,
+    any_value(argument_text) keep(dense_rank first order by duration) as arguments_for_request_with_min_duration,
+    any_value(argument_text) keep(dense_rank last order by duration) as arguments_for_request_with_max_duration    
+from requests_of_interest r 
+join concurrent_phase p on p.phase_code = r.phase_code
+join concurrent_status s on s.status_code = r.status_code
+where 1 = 1 
+    and r.phase_code = 'C'
+    and program_application_id = :APPLICATION_ID
+    and concurrent_program_id = :CONCURRENT_PROGRAM_ID
+group by grouping sets (
+    (s.meaning),
+    (request_date_mm, s.meaning),
+    (request_date_mm)
+)
+order by 
+    decode(r.status_code, 'C', 0, 1) nulls last,
+    s.meaning nulls last,
+    request_date_mm nulls last]]></sql>
+			<binds>
+				<bind id="APPLICATION_ID">
+					<prompt><![CDATA[APPLICATION_ID]]></prompt>
+					<tooltip><![CDATA[APPLICATION_ID]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+				<bind id="CONCURRENT_PROGRAM_ID">
+					<prompt><![CDATA[CONCURRENT_PROGRAM_ID]]></prompt>
+					<tooltip><![CDATA[CONCURRENT_PROGRAM_ID]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+			</binds>
+		</query>
+	</display>
+	<display id="null" type="" style="Table" enable="true">
+		<name><![CDATA[request groups and roles]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+			<TYPE><![CDATA[horizontal]]></TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[select
+    rg.request_group_id,
+    (select t.application_short_name from apps.fnd_application t where t.application_id = rg.application_id) as request_group_application_short_name,
+    rg.request_group_name,
+    rg.request_group_code,
+    r.responsibility_id,
+    (select t.application_short_name from apps.fnd_application t where t.application_id = r.application_id) as responsibility_application_short_name,
+    r.responsibility_key,
+    rtl.responsibility_name
+from apps.fnd_concurrent_programs cp
+join apps.fnd_concurrent_programs_tl cptl on 1 = 1
+    and cptl.application_id = cp.application_id
+    and cptl.concurrent_program_id = cp.concurrent_program_id
+    and cptl.language = 'RU'
+join apps.fnd_request_group_units rgu on 1 = 1
+    and rgu.unit_application_id = cp.application_id
+    and rgu.request_unit_id = cp.concurrent_program_id
+join apps.fnd_request_groups rg on 1 = 1
+    and rg.application_id = rgu.application_id
+    and rg.request_group_id = rgu.request_group_id
+join apps.fnd_responsibility r on 1 = 1
+    and r.group_application_id = rg.application_id
+    and r.request_group_id = rg.request_group_id
+join apps.fnd_responsibility_tl rtl on 1 = 1
+    and rtl.application_id = r.application_id
+    and rtl.responsibility_id = r.responsibility_id
+    and rtl.language = :LANGUAGE
+where cp.concurrent_program_id = :CONCURRENT_PROGRAM_ID
+order by
+    request_group_application_short_name,
+    rg.request_group_name,
+    rtl.responsibility_name]]></sql>
+		</query>
+	</display>
+	<display id="null" type="" style="Table" enable="true">
+		<name><![CDATA[concurretnt request log]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+			<TYPE><![CDATA[horizontal]]></TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[with 
+concurrent_status as (
+    select
+        lookup_code as status_code,
+        trim(meaning) as meaning
+    from apps.fnd_application a
+    join apps.fnd_lookup_values lv on lv.view_application_id = a.application_id
+    where 1 = 1
+        and a.application_short_name = 'FND'
+        and lv.lookup_type = 'CP_STATUS_CODE'
+        and lv.language = 'US'
+),
+concurrent_phase as (
+    select
+        lookup_code as phase_code,
+        trim(meaning) as meaning
+    from apps.fnd_application a
+    join apps.fnd_lookup_values lv on lv.view_application_id = a.application_id
+    where 1 = 1
+        and a.application_short_name = 'FND'
+        and lv.lookup_type = 'CP_PHASE_CODE'
+        and lv.language = 'US'
+)
+select 
+    r.request_date,
+    r.request_id,
+    (select meaning from concurrent_phase where phase_code = r.phase_code) phase,
+    (select meaning from concurrent_Status where status_code = r.status_code) status,
+    numtodsinterval(r.actual_completion_date - r.actual_start_date, 'day') as duration,
+    r.parent_request_id, 
+    r.priority_request_id,
+    r.priority,
+    (select user_name from apps.fnd_user where user_id = r.requested_by) as requested_by,
+    r.requested_Start_date,
+    r.actual_start_date, 
+    r.actual_completion_date,    
+    r.logfile_name,
+    r.lfile_size,
+    r.outfile_name,
+    r.ofile_size,    
+    r.argument_text,
+    r.oracle_session_id
+from apps.fnd_concurrent_requests r 
+where 1 = 1 
+    -- and r.phase_code = 'C'
+    -- and r.status_code = 'C'
+    and r.program_application_id = :APPLICATION_ID
+    and r.concurrent_program_id = :CONCURRENT_PROGRAM_ID
+order by 
+    r.request_date desc]]></sql>
+		</query>
+	</display>
+	<display id="null" type="" style="Table" enable="true">
+		<name><![CDATA[bottom 5 requests by duration per month]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+			<TYPE><![CDATA[horizontal]]></TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[with 
+concurrent_status as (
+    select
+        lookup_code as status_code,
+        trim(meaning) as meaning
+    from apps.fnd_application a
+    join apps.fnd_lookup_values lv on lv.view_application_id = a.application_id
+    where 1 = 1
+        and a.application_short_name = 'FND'
+        and lv.lookup_type = 'CP_STATUS_CODE'
+        and lv.language = 'US'
+)
+select * 
+from (
+select 
+    to_char(r.request_date, 'Mon-YY') as mon,
+    row_number() over(
+        partition by trunc(r.request_date, 'MM') 
+        order by numtodsinterval(r.actual_completion_date - r.actual_start_date, 'day') desc
+    ) as rn,
+    r.request_date,
+    r.request_id,
+    (select meaning from concurrent_Status where status_code = r.status_code) status,
+    numtodsinterval(r.actual_completion_date - r.actual_start_date, 'day') as duration,
+    r.parent_request_id, 
+    r.priority_request_id,
+    r.priority,
+    (select user_name from apps.fnd_user where user_id = r.requested_by) as requested_by,
+    r.actual_start_date, 
+    r.actual_completion_date,    
+    r.logfile_name,
+    r.lfile_size,
+    r.outfile_name,
+    r.ofile_size,    
+    r.argument_text,
+    r.oracle_session_id    
+from apps.fnd_concurrent_requests r 
+where 1 = 1 
+    and r.phase_code = 'C'
+    -- and r.status_code = 'C'
+    and r.program_application_id = :APPLICATION_ID
+    and r.concurrent_program_id = :CONCURRENT_PROGRAM_ID
+    and r.request_date >= add_months(trunc(sysdate, 'MM'), -12)
+) where rn <= 5 
+order by trunc(request_date, 'MM') desc, duration desc]]></sql>
+		</query>
+	</display>
+</display>
+</displays>
