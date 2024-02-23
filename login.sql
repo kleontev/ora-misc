@@ -27,7 +27,7 @@ select
        '&_connect_identifier, '
     || '&_user, '
     || 'sid=&_my_sid., '
-    || 'serial=&_my_serial.> ' my_prompt
+    || 'ser=&_my_serial.> ' my_prompt
 from dual
 /
 
