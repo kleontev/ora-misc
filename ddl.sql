@@ -72,8 +72,12 @@ order by
 fetch first 1 row only
 /
 
+def _ddl_dir = "&_my_temp_dir.\ddl\&_connect_identifier."
+
+ho mkdir &_ddl_dir. 2> nul
+
 def _last_ddl_path = -
-   "&_my_temp_dir.\&_obj_type._&_obj_owner._&_obj_name..sql"
+   "&_ddl_dir.\&_obj_type._&_obj_owner._&_obj_name..sql"
 
 spool &_last_ddl_path
 
@@ -114,4 +118,4 @@ spool off
 ho start &_last_ddl_path.
 
 @_unset_def_val
-undef _obj_type _obj_owner _obj_name _last_ddl_path
+undef _obj_type _obj_owner _obj_name _last_ddl_path _ddl_dir
