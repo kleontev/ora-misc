@@ -59,12 +59,6 @@ def _my_ed_path = "&_my_temp_dir.\&_my_sid._edit.sql"
 def _my_buffer_path = "&_my_temp_dir.\&_my_sid._buffer.sql"
 def _my_set_path = "&_my_temp_dir.\&_my_sid._set.sql"
 
-
--- buffer editor
-def _editor="notepad++.exe -notabbar -multiInst -nosession -noPlugin"
-set editfile &_my_ed_path
-
-
 -- transform params for ddl
 exec dbms_metadata.set_transform_param(dbms_metadata.session_transform, 'BODY', false);
 exec dbms_metadata.set_transform_param(dbms_metadata.session_transform, 'PRETTY', true);
@@ -90,6 +84,10 @@ set trimout on
 set verify off
 
 set arraysize 5000
+
+-- buffer editor
+def _editor="notepad++.exe -notabbar -multiInst -nosession -noPlugin"
+set editfile &_my_ed_path
 
 -- done. make sure I can "ed" immediately after
 select * from dual
