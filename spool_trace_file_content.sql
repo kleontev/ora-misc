@@ -13,7 +13,7 @@ col payload for a2000
 spool &1 replace
 
 select payload
-from v$diag_trace_file_contents
+from gv$diag_trace_file_contents
 where trace_filename = '&1'
 /
 spool off
