@@ -13,7 +13,7 @@ select /*+find.sql*/
     substr(sql_text, 1, 100) sql_text_first_100
 from gv$sqlarea t 
 where 1 = 1 
-    and dbms_lob.instr(sql_fulltext, '&1.') > 0
+    and dbms_lob.instr(upper(sql_fulltext), upper('&1.')) > 0
     and sql_text not like '%find.sql%'
 order by first_load_time desc
 /
