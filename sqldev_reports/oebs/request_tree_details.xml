@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <displays>
 <display id="29aff6a2-018c-1000-8006-c0a80130baa3" type="" style="Table" enable="true">
-	<name><![CDATA[hierarchical request log]]></name>
+	<name><![CDATA[request tree details]]></name>
 	<description><![CDATA[]]></description>
 	<tooltip><![CDATA[]]></tooltip>
 	<drillclass><![CDATA[]]></drillclass>
@@ -37,16 +37,20 @@ select
     p.concurrent_program_name,
     ptl.user_concurrent_program_name,
     e.execution_file_name,
+    (select meaning from concurrent_phase where phase_code = r.phase_code) phase,
+    (select meaning from concurrent_status where status_code = r.status_code) status,    
     numtodsinterval(case r.phase_code when 'C' then r.actual_completion_date else sysdate end - r.actual_Start_date, 'day') duration,
     r.request_id,
     r.parent_request_id,    
     r.root_request_id,
     rbu.user_name requested_by,
+    (select responsibility_name from apps.fnd_responsibility_tl where responsibility_id = r.responsibility_id and language = 'RU') as responsibility_name,
+    r.requested_Start_Date,
     r.actual_Start_date,    
     decode(r.phase_code, 'C', r.actual_completion_date) as actual_completion_date,
     r.argument_text,
-    (select meaning from concurrent_phase where phase_code = r.phase_code) phase,
-    (select meaning from concurrent_status where status_code = r.status_code) status,    
+    r.lfile_size,
+    r.ofile_size,
     p.concurrent_program_id,
     (select dbid from v$database) x_dbid
 from apps.fnd_concurrent_requests r
@@ -65,7 +69,7 @@ join apps.fnd_executables e on 1 = 1
 connect by 1 = 1
     and prior r.request_id = r.parent_request_id
     and level <= nvl(:HIER_LEVEL, level)
-start with r.request_id = :REQUEST_ID
+start with r.request_id = :P_REQUEST_ID
 order siblings by
     decode(r.parent_request_id, -1, r.request_date) desc,
 --    duration desc,
@@ -76,13 +80,13 @@ order siblings by
 			<bind id="HIER_LEVEL">
 				<prompt><![CDATA[HIER_LEVEL]]></prompt>
 				<tooltip><![CDATA[HIER_LEVEL]]></tooltip>
-				<value><![CDATA[NULL_VALUE]]></value>
+				<value><![CDATA[2]]></value>
 				<bracket><![CDATA[null]]></bracket>
 			</bind>
-			<bind id="REQUEST_ID">
-				<prompt><![CDATA[REQUEST_ID]]></prompt>
-				<tooltip><![CDATA[REQUEST_ID]]></tooltip>
-				<value><![CDATA[207044731]]></value>
+			<bind id="P_REQUEST_ID">
+				<prompt><![CDATA[P_REQUEST_ID]]></prompt>
+				<tooltip><![CDATA[P_REQUEST_ID]]></tooltip>
+				<value><![CDATA[222045888]]></value>
 				<bracket><![CDATA[null]]></bracket>
 			</bind>
 		</binds>
@@ -97,14 +101,307 @@ order siblings by
 		</CustomValues>
 		<query>
 			<sql><![CDATA[select * from apps.fnd_concurrent_requests where request_id = :REQUEST_ID]]></sql>
-			<binds>
-				<bind id="REQUEST_ID">
-					<prompt><![CDATA[REQUEST_ID]]></prompt>
-					<tooltip><![CDATA[REQUEST_ID]]></tooltip>
-					<value><![CDATA[NULL_VALUE]]></value>
-					<bracket><![CDATA[null]]></bracket>
-				</bind>
-			</binds>
+		</query>
+	</display>
+	<display id="null" type="" style="Script" enable="true">
+		<name><![CDATA[log]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[set feedback off 
+set timi off
+set echo off 
+set head off 
+set pages 0
+set long 2000000
+set longchunksize 2000000
+set lines 2000
+set trimspool on
+
+with function get_log(p_request_id in number) return clob
+is
+  l_conc apps.XXOBJ_CONC_REQUEST := apps.XXOBJ_CONC_REQUEST(p_request_id);
+begin
+  return l_conc.get_log;
+end;
+select get_log(:REQUEST_ID) from dual
+/]]></sql>
+		</query>
+	</display>
+	<display id="null" type="" style="Script" enable="true">
+		<name><![CDATA[result]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[set feedback off 
+set timi off
+set echo off 
+set head off 
+set pages 0
+set long 2000000
+set longchunksize 2000000
+set lines 2000
+
+with function get_result(p_request_id in number) return clob
+is
+  l_conc apps.XXOBJ_CONC_REQUEST := apps.XXOBJ_CONC_REQUEST(p_request_id);
+begin
+  return l_conc.get_result_text;
+end;
+select get_result(:REQUEST_ID) from dual
+/]]></sql>
+		</query>
+	</display>
+	<display id="null" type="" style="Table" enable="true">
+		<name><![CDATA[request param values]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+			<TYPE><![CDATA[horizontal]]></TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[with 
+args as (
+  select :REQUEST_ID as request_id from dual
+), 
+request_param_values as (
+  select --+ no_merge
+    request_id,
+    program_application_id,
+    concurrent_program_id,
+    argument_name log_col_name,
+    row_number() over(partition by program_application_id, concurrent_program_id order by to_number(replace(argument_name, 'ARGUMENT'))) rn,
+    argument_value
+  from (select * from apps.fnd_concurrent_requests where request_id = (select request_id from args))
+  unpivot include nulls (
+    argument_value 
+    for argument_name in (
+      argument1
+    , argument2
+    , argument3
+    , argument4
+    , argument5
+    , argument6
+    , argument7
+    , argument8
+    , argument9
+    , argument10
+    , argument11
+    , argument12
+    , argument13
+    , argument14
+    , argument15
+    , argument16
+    , argument17
+    , argument18
+    , argument19
+    , argument20
+    , argument21
+    , argument22
+    , argument23
+    , argument24
+    , argument25
+    )
+  )  
+), 
+concurrent_param_names as (
+  select --+ no_merge
+      cp.application_id as program_application_id,
+      cp.concurrent_program_id,
+      dfcu.application_column_name,
+      dfcu.column_seq_num,
+      dfcu.end_user_column_name,
+      dfcut.description, 
+      row_number() over(partition by cp.application_id, cp.concurrent_program_id order by dfcu.column_seq_num) rn 
+  from apps.fnd_concurrent_programs cp 
+  join apps.fnd_descr_flex_column_usages dfcu on 1 = 1 
+    and dfcu.application_id = cp.application_id 
+    and dfcu.descriptive_flexfield_name = '$SRS$.' || cp.concurrent_program_name
+  join apps.fnd_descr_flex_col_usage_tl dfcut on 1 = 1
+      and dfcut.application_id = dfcu.application_id
+      and dfcut.descriptive_flexfield_name = dfcu.descriptive_flexfield_name
+      and dfcut.application_column_name = dfcu.application_column_name
+  where 1 = 1 
+    and dfcut.language = 'RU'-- :LANGUAGE
+    and (cp.application_id, cp.concurrent_program_id) = (
+      select program_application_id, concurrent_program_id 
+      from apps.fnd_concurrent_requests 
+      where request_id = (select request_id from args)
+    )
+)
+select
+  p.column_seq_num as paremeter_order,
+  p.end_user_column_name as parameter_name,
+  p.description as parameter_description,
+  r.log_col_name,
+  r.argument_value parameter_value
+from concurrent_param_names p
+left join request_param_values r on p.rn = r.rn
+order by p.column_seq_num]]></sql>
+		</query>
+	</display>
+	<display id="null" type="" style="Table" enable="true">
+		<name><![CDATA[top sql (summary)]]></name>
+		<description><![CDATA[]]></description>
+		<tooltip><![CDATA[]]></tooltip>
+		<drillclass><![CDATA[]]></drillclass>
+		<CustomValues>
+			<TYPE><![CDATA[horizontal]]></TYPE>
+		</CustomValues>
+		<query>
+			<sql><![CDATA[with 
+request_sessions as (
+  select /*+ no_merge inline */ distinct 
+    request_id,
+    inst_id, 
+    sid, 
+    serial#
+  from system.fnd_concurrent_sessions
+  where sid is not null
+), 
+data_awr as (
+  select --+ ordered
+    r.request_id, 
+    rs.inst_id, 
+    rs.sid, 
+    rs.serial#,
+    s.dbid,
+    xt.sample_id,
+    to_timestamp(xt.sample_time, 'yyyy-mm-dd hh24:mi:ss.ff') sample_time,
+    xt.sql_id,
+    xt.sql_exec_id,
+    xt.event,
+    xt.module
+  from apps.fnd_concurrent_requests r 
+  join request_sessions rs on 1 = 1 
+    and rs.request_id = r.request_id
+  join dba_hist_snapshot s on 1 = 1 
+    and s.instance_number = rs.inst_id 
+    and not (
+      s.begin_interval_time > r.actual_completion_date
+      or 
+      s.end_interval_time < r.actual_start_date
+    )
+  cross apply xmltable(
+    '/ROWSET/ROW' 
+    passing dbms_xmlgen.getxmltype('
+    select
+      sample_id, 
+      to_char(sample_time, ''yyyy-mm-dd hh24:mi:ss.ff'') sample_time,
+      sql_id,
+      sql_exec_id,
+      event,
+      module
+    from dba_hist_Active_sess_history ash 
+    where 1 = 1 
+      and ash.instance_number = ' || rs.inst_id || '	
+      and ash.session_id = ' || rs.sid || '
+      and ash.session_serial#= ' || rs.serial# ||'
+      and ash.dbid = '|| s.dbid || '  
+      and ash.snap_id = ' || s.snap_id 
+    )
+    columns 
+      SAMPLE_ID number,     
+      SAMPLE_TIME,
+      SQL_ID,
+      SQL_EXEC_ID number,
+      EVENT,
+      MODULE
+  ) xt  
+),
+data_ash as (
+  select --+ ordered use_nl(rs ash) 
+    rs.request_id,
+    rs.inst_id,
+    rs.sid, 
+    rs.serial#,
+    (select dbid from v$database) dbid,
+    ash.sample_id,
+    ash.sample_time,
+    ash.sql_id,
+    ash.sql_exec_id,
+    ash.event,
+    ash.module
+  from request_sessions rs 
+  join gv$active_session_history ash on 1 = 1 
+    and ash.inst_id = rs.inst_id
+    and ash.session_id = rs.sid
+    and ash.session_serial# = rs.serial#
+),
+data_combined as (
+  select * from data_ash 
+  union 
+  select * from data_awr 
+), 
+data_aggregated as (
+  select 
+    dc.request_id, 
+    any_value(dbid) dbid,
+    dc.inst_id, 
+    dc.sid,
+    dc.serial#,
+    dc.sql_id,     
+--    dc.event,
+--    dc.module,
+    min(dc.sample_time) min_sample_time,
+    max(dc.sample_time) max_sample_time,
+    count(*) sample_count,
+    count(distinct dc.sql_exec_id) executions_count
+  from data_combined dc 
+  group by
+    dc.request_id, 
+    dc.inst_id, 
+    dc.sid,
+    dc.serial#,
+    dc.sql_id
+--    dc.event,
+--    dc.module
+)
+select 
+  inst_id, 
+  sid, 
+  serial#,
+  sql_id,
+--  event,
+--  module,
+  min_sample_time, 
+  max_sample_time,
+  sample_count,
+  executions_count,
+  coalesce(
+    (
+      select s.sql_text
+      from gv$sqlarea s 
+      where 1 = 1 
+        and s.inst_id = da.inst_id
+        and s.sql_id = da.sql_id  
+    ),
+    (
+      select sql_text      
+      from xmltable(
+        '/ROWSET/ROW' 
+        passing dbms_xmlgen.getxmltype('
+         select substr(s.sql_text, 1, 4000) sql_text
+         from dba_hist_sqltext s 
+         where 1 = 1 
+         and s.sql_id = ' ||  dbms_assert.enquote_literal(da.sql_id) || '
+         and s.dbid = ' ||  da.dbid 
+        )
+        columns 
+            SQL_TEXT
+      )
+    )
+  ) sql_text
+from data_aggregated da 
+where request_id = :REQUEST_ID
+order by sample_count desc]]></sql>
 		</query>
 	</display>
 <item  reload="false"  reloadparent="false" removeFromParent="false" className="oracle.dbtools.raptor.report.addin.DrillReportAction" classArgs="aeb38eb2-018a-1000-8001-c0a801306ca0" toolbar="false" ><title>информация о программе</title></item></display>
