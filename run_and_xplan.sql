@@ -4,5 +4,5 @@ set serverout off
 set feedback only sql_id
 /
 
-@xplan_prev_sql
+@xplan_prev_sql_id
 @_read_set
