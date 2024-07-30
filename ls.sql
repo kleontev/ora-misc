@@ -26,7 +26,7 @@ order by
     object_Type, 
     owner,
     object_name
-fetch first 100 rows only
+fetch first 500 rows only
 /
 
 @_read_buffer
