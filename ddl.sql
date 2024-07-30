@@ -10,6 +10,8 @@ set termout off
 col dbms_metadata_compat_obj_type new_value _obj_type
 col owner new_value _obj_owner
 col object_name new_value _obj_name
+col object_name_for_file new_value _obj_name_for_file
+
 
 set head off
 
@@ -47,7 +49,8 @@ select --+leading(pn)
         t.object_type
     ) dbms_metadata_compat_obj_type,
     t.owner,
-    t.object_name
+    t.object_name,
+    translate(t.object_name, 'x$', 'x') object_name_for_file
 from parsed_name pn
 join all_objects t on 1 = 1
     and t.owner = nvl(pn.owner, t.owner)
@@ -77,7 +80,7 @@ def _ddl_dir = "&_my_temp_dir.\ddl\&_connect_identifier."
 ho mkdir &_ddl_dir. 2> nul
 
 def _last_ddl_path = -
-   "&_ddl_dir.\&_obj_type._&_obj_owner._&_obj_name..sql"
+   "&_ddl_dir.\&_obj_type._&_obj_owner._&_obj_name_for_file..sql"
 
 spool &_last_ddl_path
 
