@@ -7,7 +7,7 @@ set termout on
 0 explain plan for
 /
 
-select * from table(dbms_xplan.display(format => 'all +alias -projection +note -outline'))
+select * from table(dbms_xplan.display(format => 'all +alias -projection +note +outline'))
 /
 
 @_read_buffer
