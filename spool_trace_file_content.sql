@@ -7,6 +7,8 @@ set termout off
 set timi off
 set trimspool on
 set verify off
+set arraysize 10000
+set flush off
 
 col payload for a2000
 
