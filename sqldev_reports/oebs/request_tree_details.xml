@@ -49,10 +49,14 @@ select
     r.actual_Start_date,    
     decode(r.phase_code, 'C', r.actual_completion_date) as actual_completion_date,
     r.argument_text,
-    r.lfile_size,
+    r.completion_text,
+    r.description as request_description,
+    r.lfile_size, 
     r.ofile_size,
     p.concurrent_program_id,
-    (select dbid from v$database) x_dbid
+    (select dbid from v$database) x_dbid, 
+    :P_GROUP_ASH_DATA_BY_EVENT as x_group_by_event,
+    :P_GROUP_ASH_DATA_BY_PLSQL as x_group_by_plsql
 from apps.fnd_concurrent_requests r
 join apps.fnd_user rbu on 1 = 1 
     and rbu.user_id = r.requested_by
@@ -62,31 +66,44 @@ join apps.fnd_concurrent_programs p on 1 = 1
 left join apps.fnd_concurrent_programs_tl ptl on 1 = 1 
     and ptl.application_id  = p.application_id
     and ptl.concurrent_program_id = p.concurrent_program_id
-    and ptl.language = 'US'
+    and ptl.language = 'RU'
 join apps.fnd_executables e on 1 = 1
     and e.application_id = p.executable_application_id
     and e.executable_id = p.executable_id
 connect by 1 = 1
     and prior r.request_id = r.parent_request_id
-    and level <= nvl(:HIER_LEVEL, level)
+    and level <= nvl(:P_HIER_LEVEL, level)
 start with r.request_id = :P_REQUEST_ID
 order siblings by
-    decode(r.parent_request_id, -1, r.request_date) desc,
+    -- decode(r.parent_request_id, -1, r.request_date) desc,
 --    duration desc,
-    r.request_id,
-    r.actual_start_date,
-    duration desc]]></sql>
+--    r.requested_start_date,
+    r.actual_start_date nulls last,
+    r.request_id
+    --duration desc]]></sql>
 		<binds>
-			<bind id="HIER_LEVEL">
-				<prompt><![CDATA[HIER_LEVEL]]></prompt>
-				<tooltip><![CDATA[HIER_LEVEL]]></tooltip>
-				<value><![CDATA[2]]></value>
+			<bind id="P_GROUP_ASH_DATA_BY_EVENT">
+				<prompt><![CDATA[P_GROUP_ASH_DATA_BY_EVENT]]></prompt>
+				<tooltip><![CDATA[P_GROUP_ASH_DATA_BY_EVENT]]></tooltip>
+				<value><![CDATA[NULL_VALUE]]></value>
+				<bracket><![CDATA[null]]></bracket>
+			</bind>
+			<bind id="P_GROUP_ASH_DATA_BY_PLSQL">
+				<prompt><![CDATA[P_GROUP_ASH_DATA_BY_PLSQL]]></prompt>
+				<tooltip><![CDATA[P_GROUP_ASH_DATA_BY_PLSQL]]></tooltip>
+				<value><![CDATA[NULL_VALUE]]></value>
+				<bracket><![CDATA[null]]></bracket>
+			</bind>
+			<bind id="P_HIER_LEVEL">
+				<prompt><![CDATA[P_HIER_LEVEL]]></prompt>
+				<tooltip><![CDATA[P_HIER_LEVEL]]></tooltip>
+				<value><![CDATA[NULL_VALUE]]></value>
 				<bracket><![CDATA[null]]></bracket>
 			</bind>
 			<bind id="P_REQUEST_ID">
 				<prompt><![CDATA[P_REQUEST_ID]]></prompt>
 				<tooltip><![CDATA[P_REQUEST_ID]]></tooltip>
-				<value><![CDATA[222045888]]></value>
+				<value><![CDATA[246978891]]></value>
 				<bracket><![CDATA[null]]></bracket>
 			</bind>
 		</binds>
@@ -101,6 +118,14 @@ order siblings by
 		</CustomValues>
 		<query>
 			<sql><![CDATA[select * from apps.fnd_concurrent_requests where request_id = :REQUEST_ID]]></sql>
+			<binds>
+				<bind id="REQUEST_ID">
+					<prompt><![CDATA[REQUEST_ID]]></prompt>
+					<tooltip><![CDATA[REQUEST_ID]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+			</binds>
 		</query>
 	</display>
 	<display id="null" type="" style="Script" enable="true">
@@ -245,6 +270,14 @@ select
 from concurrent_param_names p
 left join request_param_values r on p.rn = r.rn
 order by p.column_seq_num]]></sql>
+			<binds>
+				<bind id="REQUEST_ID">
+					<prompt><![CDATA[REQUEST_ID]]></prompt>
+					<tooltip><![CDATA[REQUEST_ID]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+			</binds>
 		</query>
 	</display>
 	<display id="null" type="" style="Table" enable="true">
@@ -256,21 +289,21 @@ order by p.column_seq_num]]></sql>
 			<TYPE><![CDATA[horizontal]]></TYPE>
 		</CustomValues>
 		<query>
-			<sql><![CDATA[with 
+			<sql><![CDATA[with
 request_sessions as (
-  select /*+ no_merge inline */ distinct 
+  select /*+ no_merge inline */ distinct
     request_id,
-    inst_id, 
-    sid, 
+    inst_id,
+    sid,
     serial#
   from system.fnd_concurrent_sessions
   where sid is not null
-), 
+),
 data_awr as (
   select --+ ordered
-    r.request_id, 
-    rs.inst_id, 
-    rs.sid, 
+    r.request_id,
+    rs.inst_id,
+    rs.sid,
     rs.serial#,
     s.dbid,
     xt.sample_id,
@@ -278,49 +311,61 @@ data_awr as (
     xt.sql_id,
     xt.sql_exec_id,
     xt.event,
-    xt.module
-  from apps.fnd_concurrent_requests r 
-  join request_sessions rs on 1 = 1 
+    xt.module,
+    xt.plsql_entry_object_id,
+    xt.plsql_entry_subprogram_id,
+    xt.plsql_object_id,
+    xt.plsql_subprogram_id
+  from apps.fnd_concurrent_requests r
+  join request_sessions rs on 1 = 1
     and rs.request_id = r.request_id
-  join dba_hist_snapshot s on 1 = 1 
-    and s.instance_number = rs.inst_id 
+  join dba_hist_snapshot s on 1 = 1
+    and s.instance_number = rs.inst_id
     and not (
       s.begin_interval_time > r.actual_completion_date
-      or 
+      or
       s.end_interval_time < r.actual_start_date
     )
   cross apply xmltable(
-    '/ROWSET/ROW' 
+    '/ROWSET/ROW'
     passing dbms_xmlgen.getxmltype('
     select
-      sample_id, 
+      sample_id,
       to_char(sample_time, ''yyyy-mm-dd hh24:mi:ss.ff'') sample_time,
       sql_id,
       sql_exec_id,
       event,
-      module
-    from dba_hist_Active_sess_history ash 
-    where 1 = 1 
-      and ash.instance_number = ' || rs.inst_id || '	
+      module,
+      plsql_entry_object_id,
+      plsql_entry_subprogram_id,
+      plsql_object_id,
+      plsql_subprogram_id
+    from dba_hist_Active_sess_history ash
+    where 1 = 1
+      and ash.instance_number = ' || rs.inst_id || '
       and ash.session_id = ' || rs.sid || '
       and ash.session_serial#= ' || rs.serial# ||'
-      and ash.dbid = '|| s.dbid || '  
-      and ash.snap_id = ' || s.snap_id 
+      and ash.dbid = '|| s.dbid || '
+      and ash.snap_id = ' || s.snap_id
     )
-    columns 
-      SAMPLE_ID number,     
+    columns
+      SAMPLE_ID number,
       SAMPLE_TIME,
       SQL_ID,
       SQL_EXEC_ID number,
       EVENT,
-      MODULE
-  ) xt  
+      MODULE,
+      PLSQL_ENTRY_OBJECT_ID number,
+      PLSQL_ENTRY_SUBPROGRAM_ID number,
+      PLSQL_OBJECT_ID number,
+      PLSQL_SUBPROGRAM_ID number
+  ) xt
 ),
 data_ash as (
-  select --+ ordered use_nl(rs ash) 
+  select --+ ordered use_nl(rs ash)
     rs.request_id,
     rs.inst_id,
-    rs.sid, 
+    rs.sid,
     rs.serial#,
     (select dbid from v$database) dbid,
     ash.sample_id,
@@ -328,81 +373,161 @@ data_ash as (
     ash.sql_id,
     ash.sql_exec_id,
     ash.event,
-    ash.module
-  from request_sessions rs 
-  join gv$active_session_history ash on 1 = 1 
+    ash.module,
+    ash.plsql_entry_object_id,
+    ash.plsql_entry_subprogram_id,
+    ash.plsql_object_id,
+    ash.plsql_subprogram_id
+  from request_sessions rs
+  join gv$active_session_history ash on 1 = 1
     and ash.inst_id = rs.inst_id
     and ash.session_id = rs.sid
     and ash.session_serial# = rs.serial#
 ),
 data_combined as (
-  select * from data_ash 
-  union 
-  select * from data_awr 
-), 
+  select
+      request_id
+    , inst_id
+    , sid
+    , serial#
+    , dbid
+    , sample_id
+    , sample_time
+    , sql_id
+    , sql_exec_id
+    , module
+    , decode(upper(trim(:X_GROUP_BY_EVENT)), 'Y', nvl(event, 'ON CPU')     ) as event
+    , decode(upper(trim(:X_GROUP_BY_PLSQL)), 'Y', plsql_entry_object_id    ) as plsql_entry_object_id
+    , decode(upper(trim(:X_GROUP_BY_PLSQL)), 'Y', plsql_entry_subprogram_id) as plsql_entry_subprogram_id
+    , decode(upper(trim(:X_GROUP_BY_PLSQL)), 'Y', plsql_object_id          ) as plsql_object_id
+    , decode(upper(trim(:X_GROUP_BY_PLSQL)), 'Y', plsql_subprogram_id      ) as plsql_subprogram_id
+  from (
+    select * from data_ash
+    union
+    select * from data_awr
+  )
+),
 data_aggregated as (
-  select 
-    dc.request_id, 
+  select
+    dc.request_id,
     any_value(dbid) dbid,
-    dc.inst_id, 
+    dc.inst_id,
     dc.sid,
     dc.serial#,
-    dc.sql_id,     
---    dc.event,
---    dc.module,
+    dc.sql_id,
+    dc.plsql_entry_object_id,
+    dc.plsql_entry_subprogram_id,
+    dc.plsql_object_id,
+    dc.plsql_subprogram_id,
+    dc.event,
+    dc.module,
     min(dc.sample_time) min_sample_time,
     max(dc.sample_time) max_sample_time,
     count(*) sample_count,
     count(distinct dc.sql_exec_id) executions_count
-  from data_combined dc 
+  from data_combined dc
   group by
-    dc.request_id, 
-    dc.inst_id, 
+    dc.request_id,
+    dc.inst_id,
     dc.sid,
     dc.serial#,
-    dc.sql_id
---    dc.event,
---    dc.module
+    dc.sql_id,
+    dc.plsql_entry_object_id,
+    dc.plsql_entry_subprogram_id,
+    dc.plsql_object_id,
+    dc.plsql_subprogram_id,
+    dc.event,
+    dc.module
 )
-select 
-  inst_id, 
-  sid, 
-  serial#,
+select --+ ordered use_hash(da p)
+  inst_id,
+  sid,
+  serial#,  
+  (
+    select
+    -- all/dba_procedures, в который можно передать *subprogram_id, работает очень медленно, поэтому, увы, так
+    decode(
+      p.owner,
+      null, null,
+      p.owner || '.' || p.object_name --|| decode(p.procedure_name, null, null, '.' || p.procedure_name)
+    )
+    from all_objects p
+    where 1 = 1
+      and p.object_id = da.plsql_entry_object_id
+      -- and p.subprogram_id = da.plsql_entry_subprogram_id
+      and rownum = 1
+  ) as plsql_entry_object_name,
+  (
+    select
+    decode(
+      p.owner,
+      null, null,
+      p.owner || '.' || p.object_name --|| decode(p.procedure_name, null, null, '.' || p.procedure_name)
+    )
+    from all_objects p
+    where 1 = 1
+      and p.object_id = da.plsql_object_id
+      and rownum = 1
+  ) as plsql_object_name,  
   sql_id,
---  event,
---  module,
-  min_sample_time, 
+  event,
+  module,
+  min_sample_time,
   max_sample_time,
   sample_count,
   executions_count,
   coalesce(
     (
       select s.sql_text
-      from gv$sqlarea s 
-      where 1 = 1 
+      from gv$sqlarea s
+      where 1 = 1
         and s.inst_id = da.inst_id
-        and s.sql_id = da.sql_id  
+        and s.sql_id = da.sql_id
     ),
     (
-      select sql_text      
+      select sql_text
       from xmltable(
-        '/ROWSET/ROW' 
+        '/ROWSET/ROW'
         passing dbms_xmlgen.getxmltype('
          select substr(s.sql_text, 1, 4000) sql_text
-         from dba_hist_sqltext s 
-         where 1 = 1 
+         from dba_hist_sqltext s
+         where 1 = 1
          and s.sql_id = ' ||  dbms_assert.enquote_literal(da.sql_id) || '
-         and s.dbid = ' ||  da.dbid 
+         and s.dbid = ' ||  da.dbid
         )
-        columns 
+        columns
             SQL_TEXT
       )
     )
-  ) sql_text
-from data_aggregated da 
-where request_id = :REQUEST_ID
-order by sample_count desc]]></sql>
+  ) sql_text,
+  plsql_entry_object_id,
+  plsql_entry_subprogram_id,
+  plsql_object_id,
+  plsql_subprogram_id
+from data_aggregated da
+where da.request_id = :REQUEST_ID
+order by da.sample_count desc]]></sql>
+			<binds>
+				<bind id="X_GROUP_BY_EVENT">
+					<prompt><![CDATA[X_GROUP_BY_EVENT]]></prompt>
+					<tooltip><![CDATA[X_GROUP_BY_EVENT]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+				<bind id="X_GROUP_BY_PLSQL">
+					<prompt><![CDATA[X_GROUP_BY_PLSQL]]></prompt>
+					<tooltip><![CDATA[X_GROUP_BY_PLSQL]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+				<bind id="REQUEST_ID">
+					<prompt><![CDATA[REQUEST_ID]]></prompt>
+					<tooltip><![CDATA[REQUEST_ID]]></tooltip>
+					<value><![CDATA[NULL_VALUE]]></value>
+					<bracket><![CDATA[null]]></bracket>
+				</bind>
+			</binds>
 		</query>
 	</display>
-<item  reload="false"  reloadparent="false" removeFromParent="false" className="oracle.dbtools.raptor.report.addin.DrillReportAction" classArgs="aeb38eb2-018a-1000-8001-c0a801306ca0" toolbar="false" ><title>информация о программе</title></item></display>
+</display>
 </displays>
