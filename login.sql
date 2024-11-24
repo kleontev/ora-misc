@@ -50,7 +50,7 @@ alter session set nls_timestamp_format = 'yyyy.mm.dd HH24.MI.SSXFF';
 alter session set nls_timestamp_tz_format = 'yyyy.mm.dd HH24.MI.SSXFF TZR';
 
 alter session set statistics_level = all;
-alter session set plsql_warnings = 'enable:all';
+alter session set plsql_warnings = 'enable:severe';
 
 
 -- init common paths for buffers and spools
